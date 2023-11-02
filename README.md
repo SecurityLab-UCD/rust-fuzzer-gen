@@ -2,10 +2,25 @@
 
 Convert libFuzzer files to Unit Tests for Rust.
 
+## Setup
+
+- Rust nightly
+  ```bash
+  rustup install nightly
+  rustup default nightly
+  ```
+
+- cargo-fuzz
+  ```bash
+  cargo install cargo-fuzz
+  ```
+
+
 ## Usage
 
 **NOTE**
 The process is subject to change as the project matures.
+
 
 ### Getting Repo
 
