@@ -18,7 +18,7 @@ cd ..
 ### Transforming Fuzzers
 
 ```bash
-cargo run
+cargo run data/rust-base64
 ```
 
 ### Fuzzing with data recorded

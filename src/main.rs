@@ -1,6 +1,7 @@
 mod transformers;
 
 use quote::ToTokens;
+use std::env;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -34,7 +35,12 @@ fn add_report(code: &str) -> String {
 }
 
 fn main() {
-    let repo_root = Path::new("data/rust-base64");
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        panic!("Usage: cargo run <path to repo root>");
+    }
+
+    let repo_root = Path::new(&args[1]);
     let fuzz_path = repo_root.join("fuzz");
     let fuzz_bak = repo_root.join("fuzz-bak");
     let _ = Command::new("cp")
