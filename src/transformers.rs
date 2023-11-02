@@ -1,9 +1,24 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::visit_mut::VisitMut;
+use syn::{visit_mut::VisitMut, Expr};
+
+/// Convert the body of the fuzz_target! macro into a test function
+fn to_test_fn(content: Expr) -> String {
+    let test_fn = quote! {
+        #[test]
+        fn test_something() {
+            let data = [];
+            #content
+        }
+    };
+
+    return test_fn.to_string();
+}
 
 /// add println!() to the beginning of the fuzz_target! macro
-pub struct ReportTransformer;
+pub struct ReportTransformer {
+    pub test_fns: Vec<String>,
+}
 
 impl VisitMut for ReportTransformer {
     fn visit_macro_mut(&mut self, mac: &mut syn::Macro) {
@@ -20,6 +35,7 @@ impl VisitMut for ReportTransformer {
                     }
                 };
 
+                self.test_fns.push(to_test_fn(body.as_ref().clone()));
                 mac.tokens = TokenStream::from(modified);
             }
         }
