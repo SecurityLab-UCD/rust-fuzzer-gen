@@ -49,3 +49,10 @@ cd data/rust-base64
 cargo fuzz run roundtrip > record.txt
 head record.txt
 ```
+
+### Using as a package
+
+```bash
+cargo install --git https://github.com/SecurityLab-UCD/rust-fuzzer-gen.git
+rust-fuzzer-gen <patht to a target repo>
+```
