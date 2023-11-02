@@ -1,6 +1,5 @@
-# RustFuzzerGen
-
-Convert libFuzzer files to Unit Tests for Rust.
+# rust-fuzzer-gen
+Convert libFuzzer `fuzz_target!` files to Unit Tests `#[test]` for Rust.
 
 ## Setup
 
