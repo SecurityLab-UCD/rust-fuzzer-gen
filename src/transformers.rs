@@ -15,15 +15,21 @@ fn to_test_fn(content_tokens: TokenStream, input_identifier: TokenStream) -> Str
     return test_fn.to_string();
 }
 
+/// Extract the input identifier from the input tokens,
+/// get the first variable name before the type (starting with ':')
+///
+/// e.g. input_identifier_wo_type("a: &u8") -> "a"
 fn input_identifier_wo_type(inputs: TokenStream) -> TokenStream {
-    let mut input_identifier = TokenStream::new();
-    for token in inputs.into_iter() {
-        match &token {
-            TokenTree::Punct(punct) if punct.as_char() == ':' => break,
-            _ => input_identifier.extend(Some(token)),
-        }
-    }
-    input_identifier
+    inputs
+        .into_iter()
+        .take_while(|token| {
+            if let TokenTree::Punct(punct) = token {
+                punct.as_char() != ':'
+            } else {
+                true
+            }
+        })
+        .collect()
 }
 /// add println!() to the beginning of the fuzz_target! macro
 pub struct ReportTransformer {
