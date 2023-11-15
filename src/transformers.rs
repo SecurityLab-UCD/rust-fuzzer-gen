@@ -1,13 +1,13 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, TokenTree};
 use quote::quote;
 use syn::{visit_mut::VisitMut, Expr, ExprBlock};
 
 /// Convert the body of the fuzz_target! macro into a test function
-fn to_test_fn(content_tokens: TokenStream) -> String {
+fn to_test_fn(content_tokens: TokenStream, input_identifier: TokenStream) -> String {
     let test_fn = quote! {
         #[test]
         fn test_something() {
-            let data = [];
+            let #input_identifier = [];
             #content_tokens
         }
     };
@@ -15,6 +15,16 @@ fn to_test_fn(content_tokens: TokenStream) -> String {
     return test_fn.to_string();
 }
 
+fn input_identifier_wo_type(inputs: TokenStream) -> TokenStream {
+    let mut input_identifier = TokenStream::new();
+    for token in inputs.into_iter() {
+        match &token {
+            TokenTree::Punct(punct) if punct.as_char() == ':' => break,
+            _ => input_identifier.extend(Some(token)),
+        }
+    }
+    input_identifier
+}
 /// add println!() to the beginning of the fuzz_target! macro
 pub struct ReportTransformer {
     pub test_fns: Vec<String>,
@@ -41,14 +51,19 @@ impl VisitMut for ReportTransformer {
                     quote! { #body }
                 };
 
+                let input_tokens: TokenStream =
+                    inputs.into_iter().map(|stmt| quote! {#stmt}).collect();
+                let input_identifier = input_identifier_wo_type(input_tokens);
+
                 let modified = quote! {
                     |#inputs| {
-                        println!("{:?}", data);
+                        println!("{:?}", #input_identifier);
                         #body_tokens
                     }
                 };
 
-                self.test_fns.push(to_test_fn(body_tokens));
+                self.test_fns
+                    .push(to_test_fn(body_tokens, input_identifier));
                 mac.tokens = TokenStream::from(modified);
             }
         }
