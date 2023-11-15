@@ -7,7 +7,7 @@ fn to_test_fn(content_tokens: TokenStream, input_identifier: TokenStream) -> Str
     let test_fn = quote! {
         #[test]
         fn test_something() {
-            let #input_identifier = [];
+            let #input_identifier = []; #[doc="This is a test template"]
             #content_tokens
         }
     };
