@@ -1,13 +1,13 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, TokenTree};
 use quote::quote;
 use syn::{visit_mut::VisitMut, Expr, ExprBlock};
 
 /// Convert the body of the fuzz_target! macro into a test function
-fn to_test_fn(content_tokens: TokenStream) -> String {
+fn to_test_fn(content_tokens: TokenStream, input_identifier: TokenStream) -> String {
     let test_fn = quote! {
         #[test]
         fn test_something() {
-            let data = [];
+            let #input_identifier = []; #[doc="This is a test template"]
             #content_tokens
         }
     };
@@ -15,6 +15,22 @@ fn to_test_fn(content_tokens: TokenStream) -> String {
     return test_fn.to_string();
 }
 
+/// Extract the input identifier from the input tokens,
+/// get the first variable name before the type (starting with ':')
+///
+/// e.g. input_identifier_wo_type("a: &u8") -> "a"
+fn input_identifier_wo_type(inputs: TokenStream) -> TokenStream {
+    inputs
+        .into_iter()
+        .take_while(|token| {
+            if let TokenTree::Punct(punct) = token {
+                punct.as_char() != ':'
+            } else {
+                true
+            }
+        })
+        .collect()
+}
 /// add println!() to the beginning of the fuzz_target! macro
 pub struct ReportTransformer {
     pub test_fns: Vec<String>,
@@ -41,14 +57,19 @@ impl VisitMut for ReportTransformer {
                     quote! { #body }
                 };
 
+                let input_tokens: TokenStream =
+                    inputs.into_iter().map(|stmt| quote! {#stmt}).collect();
+                let input_identifier = input_identifier_wo_type(input_tokens);
+
                 let modified = quote! {
                     |#inputs| {
-                        println!("{:?}", data);
+                        println!("{:?}", #input_identifier);
                         #body_tokens
                     }
                 };
 
-                self.test_fns.push(to_test_fn(body_tokens));
+                self.test_fns
+                    .push(to_test_fn(body_tokens, input_identifier));
                 mac.tokens = TokenStream::from(modified);
             }
         }
